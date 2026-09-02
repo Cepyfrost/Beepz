@@ -8,13 +8,14 @@ name: Build BEEPZ APK
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout BEEPZ
         uses: actions/checkout@v6
 
       - name: Set up Java 17
@@ -29,14 +30,19 @@ jobs:
       - name: Install Android SDK
         run: |
           yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
-      - name: Create BEEPZ project
+      - name: Create project folders
         run: |
           mkdir -p app/src/main/java/com/beepz/app
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/res/values
 
+      - name: Create settings.gradle
+        run: |
           cat > settings.gradle <<'EOF'
           pluginManagement {
               repositories {
@@ -58,17 +64,23 @@ jobs:
           include(":app")
           EOF
 
+      - name: Create root build.gradle
+        run: |
           cat > build.gradle <<'EOF'
           plugins {
               id 'com.android.application' version '8.7.3' apply false
           }
           EOF
 
+      - name: Create gradle.properties
+        run: |
           cat > gradle.properties <<'EOF'
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
           android.useAndroidX=true
           EOF
 
+      - name: Create Android app configuration
+        run: |
           cat > app/build.gradle <<'EOF'
           plugins {
               id 'com.android.application'
@@ -87,6 +99,10 @@ jobs:
               }
 
               buildTypes {
+                  debug {
+                      minifyEnabled false
+                  }
+
                   release {
                       minifyEnabled false
                   }
@@ -99,6 +115,8 @@ jobs:
           }
           EOF
 
+      - name: Create AndroidManifest.xml
+        run: |
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -126,16 +144,25 @@ jobs:
           </manifest>
           EOF
 
+      - name: Create app theme
+        run: |
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <resources>
-              <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+
+              <style name="AppTheme"
+                     parent="Theme.AppCompat.DayNight.NoActionBar">
+
                   <item name="android:fontFamily">sans</item>
                   <item name="android:statusBarColor">#080808</item>
                   <item name="android:navigationBarColor">#080808</item>
+
               </style>
+
           </resources>
           EOF
 
+      - name: Create MainActivity
+        run: |
           cat > app/src/main/java/com/beepz/app/MainActivity.java <<'EOF'
           package com.beepz.app;
 
@@ -156,12 +183,18 @@ jobs:
                   webView = new WebView(this);
 
                   WebSettings settings = webView.getSettings();
+
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setMediaPlaybackRequiresUserGesture(false);
+                  settings.setAllowFileAccess(true);
+                  settings.setAllowContentAccess(true);
 
                   webView.setWebViewClient(new WebViewClient());
-                  webView.loadUrl("file:///android_asset/beepz.html");
+
+                  webView.loadUrl(
+                      "file:///android_asset/beepz.html"
+                  );
 
                   setContentView(webView);
               }
@@ -177,461 +210,636 @@ jobs:
           }
           EOF
 
+      - name: Create BEEPZ interface
+        run: |
           cat > app/src/main/assets/beepz.html <<'EOF'
           <!DOCTYPE html>
           <html>
+
           <head>
-              <meta charset="UTF-8">
-              <meta name="viewport"
-                    content="width=device-width, initial-scale=1.0,
-                    maximum-scale=1.0, user-scalable=no">
 
-              <title>BEEPZ</title>
+          <meta charset="UTF-8">
 
-              <style>
-                  * {
-                      box-sizing: border-box;
-                      -webkit-tap-highlight-color: transparent;
-                  }
+          <meta
+              name="viewport"
+              content="width=device-width,
+              initial-scale=1.0,
+              maximum-scale=1.0,
+              user-scalable=no">
 
-                  body {
-                      margin: 0;
-                      background: #080808;
-                      color: white;
-                      font-family: Arial, sans-serif;
-                  }
+          <title>BEEPZ</title>
 
-                  .app {
-                      min-height: 100vh;
-                      padding-bottom: 75px;
-                  }
+          <style>
 
-                  header {
-                      height: 70px;
-                      display: flex;
-                      align-items: center;
-                      justify-content: space-between;
-                      padding: 0 18px;
-                      border-bottom: 1px solid #222;
-                      position: sticky;
-                      top: 0;
-                      background: #080808;
-                      z-index: 10;
-                  }
+          * {
+              box-sizing: border-box;
+              -webkit-tap-highlight-color: transparent;
+          }
 
-                  .logo {
-                      font-size: 28px;
-                      font-weight: 900;
-                      letter-spacing: 2px;
-                  }
+          body {
+              margin: 0;
+              background: #080808;
+              color: white;
+              font-family: Arial, sans-serif;
+          }
 
-                  .logo span {
-                      color: #ff3b30;
-                  }
+          .app {
+              min-height: 100vh;
+              padding-bottom: 75px;
+          }
 
-                  .content {
-                      padding: 18px;
-                  }
+          header {
+              height: 70px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 0 18px;
+              background: #080808;
+              border-bottom: 1px solid #222;
+          }
 
-                  .page {
-                      display: none;
-                  }
+          .logo {
+              font-size: 28px;
+              font-weight: 900;
+              letter-spacing: 2px;
+          }
 
-                  .page.active {
-                      display: block;
-                  }
+          .logo span {
+              color: #ff3b30;
+          }
 
-                  h1 {
-                      font-size: 25px;
-                      margin-bottom: 5px;
-                  }
+          header button {
+              border: 0;
+              background: none;
+              color: white;
+              font-size: 22px;
+          }
 
-                  .sub {
-                      color: #888;
-                      margin-bottom: 20px;
-                  }
+          main {
+              padding: 18px;
+          }
 
-                  .post {
-                      background: #121212;
-                      border: 1px solid #242424;
-                      border-radius: 15px;
-                      padding: 15px;
-                      margin-bottom: 18px;
-                  }
+          .page {
+              display: none;
+          }
 
-                  .user {
-                      display: flex;
-                      align-items: center;
-                      gap: 10px;
-                  }
+          .page.active {
+              display: block;
+          }
 
-                  .avatar {
-                      width: 44px;
-                      height: 44px;
-                      border-radius: 50%;
-                      background: #292929;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                  }
+          h1 {
+              font-size: 25px;
+              margin: 0 0 5px;
+          }
 
-                  .post-text {
-                      line-height: 1.5;
-                      margin: 15px 0;
-                  }
+          .sub {
+              color: #888;
+              margin-bottom: 20px;
+          }
 
-                  .media {
-                      height: 180px;
-                      border-radius: 12px;
-                      background: #202020;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      font-size: 45px;
-                      margin-bottom: 12px;
-                  }
+          .post {
+              background: #121212;
+              border: 1px solid #242424;
+              border-radius: 15px;
+              padding: 15px;
+              margin-bottom: 18px;
+          }
 
-                  .actions {
-                      display: flex;
-                      gap: 18px;
-                  }
+          .user {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+          }
 
-                  button {
-                      border: 0;
-                      background: none;
-                      color: white;
-                  }
+          .avatar {
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              background: #292929;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+          }
 
-                  .voice {
-                      color: #ff3b30;
-                      font-weight: bold;
-                  }
+          .post-text {
+              line-height: 1.5;
+              margin: 15px 0;
+          }
 
-                  .card {
-                      background: #121212;
-                      border: 1px solid #242424;
-                      border-radius: 15px;
-                      padding: 16px;
-                      margin-bottom: 12px;
-                  }
+          .media {
+              height: 180px;
+              border-radius: 12px;
+              background: #202020;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 45px;
+              margin-bottom: 12px;
+          }
 
-                  .music {
-                      display: flex;
-                      align-items: center;
-                      gap: 13px;
-                  }
+          .actions {
+              display: flex;
+              gap: 16px;
+              flex-wrap: wrap;
+          }
 
-                  .cover {
-                      width: 55px;
-                      height: 55px;
-                      border-radius: 9px;
-                      background: #292929;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      font-size: 22px;
-                  }
+          .actions button {
+              border: 0;
+              background: none;
+              color: #bbb;
+          }
 
-                  .music-info {
-                      flex: 1;
-                  }
+          .voice {
+              color: #ff3b30 !important;
+              font-weight: bold;
+          }
 
-                  .artist {
-                      color: #888;
-                      font-size: 13px;
-                      margin-top: 4px;
-                  }
+          .card {
+              background: #121212;
+              border: 1px solid #242424;
+              border-radius: 15px;
+              padding: 16px;
+              margin-bottom: 12px;
+          }
 
-                  .play {
-                      width: 42px;
-                      height: 42px;
-                      border-radius: 50%;
-                      background: white;
-                      color: black;
-                  }
+          .music {
+              display: flex;
+              align-items: center;
+              gap: 13px;
+          }
 
-                  .bottom {
-                      position: fixed;
-                      left: 0;
-                      right: 0;
-                      bottom: 0;
-                      height: 68px;
-                      background: #101010;
-                      border-top: 1px solid #252525;
-                      display: flex;
-                      justify-content: space-around;
-                      align-items: center;
-                      z-index: 20;
-                  }
+          .cover {
+              width: 55px;
+              height: 55px;
+              border-radius: 9px;
+              background: #292929;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 22px;
+          }
 
-                  .nav {
-                      color: #777;
-                      font-size: 11px;
-                  }
+          .music-info {
+              flex: 1;
+          }
 
-                  .nav.active {
-                      color: white;
-                  }
+          .artist {
+              color: #888;
+              font-size: 13px;
+              margin-top: 4px;
+          }
 
-                  .nav-icon {
-                      display: block;
-                      font-size: 21px;
-                      margin-bottom: 3px;
-                  }
-              </style>
+          .play {
+              width: 42px;
+              height: 42px;
+              border-radius: 50%;
+              border: 0;
+              background: white;
+              color: black;
+          }
+
+          .bottom {
+              position: fixed;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              height: 68px;
+              background: #101010;
+              border-top: 1px solid #252525;
+              display: flex;
+              justify-content: space-around;
+              align-items: center;
+              z-index: 20;
+          }
+
+          .nav {
+              border: 0;
+              background: none;
+              color: #777;
+              font-size: 11px;
+          }
+
+          .nav.active {
+              color: white;
+          }
+
+          .nav-icon {
+              display: block;
+              font-size: 21px;
+              margin-bottom: 3px;
+          }
+
+          </style>
+
           </head>
 
           <body>
 
           <div class="app">
 
-              <header>
-                  <div class="logo">BEEP<span>Z</span></div>
-                  <button onclick="notify()">🔔</button>
-              </header>
+          <header>
 
-              <main class="content">
+              <div class="logo">
+                  BEEP<span>Z</span>
+              </div>
 
-                  <section id="home" class="page active">
-                      <h1>What's happening?</h1>
-                      <div class="sub">Say it. Don't just type it.</div>
+              <button onclick="notify()">
+                  🔔
+              </button>
 
-                      <article class="post">
-                          <div class="user">
-                              <div class="avatar">🎧</div>
-                              <div>
-                                  <b>BEEPZ Music</b>
-                                  <div style="color:#777;font-size:12px">
-                                      Just now
-                                  </div>
-                              </div>
-                          </div>
+          </header>
 
-                          <div class="post-text">
-                              Welcome to BEEPZ — discover people,
-                              music and voices.
-                          </div>
+          <main>
 
-                          <div class="media">🎵</div>
+          <section id="home" class="page active">
 
-                          <div class="actions">
-                              <button onclick="like(this)">♡ Like</button>
-                              <button>💬 Comment</button>
-                              <button class="voice" onclick="voice()">
-                                  🎙️ Voice
-                              </button>
-                              <button>↗ Share</button>
-                          </div>
-                      </article>
+              <h1>What's happening?</h1>
 
-                      <article class="post">
-                          <div class="user">
-                              <div class="avatar">🎤</div>
-                              <div>
-                                  <b>Rising Artist</b>
-                                  <div style="color:#777;font-size:12px">
-                                      12 min ago
-                                  </div>
-                              </div>
-                          </div>
+              <div class="sub">
+                  Say it. Don't just type it.
+              </div>
 
-                          <div class="post-text">
-                              New music coming soon. BEEPZ fam,
-                              are you ready?
-                          </div>
+              <article class="post">
 
-                          <div class="actions">
-                              <button onclick="like(this)">♡ Like</button>
-                              <button>💬 Comment</button>
-                              <button class="voice" onclick="voice()">
-                                  🎙️ Voice
-                              </button>
-                          </div>
-                      </article>
-                  </section>
+                  <div class="user">
 
-                  <section id="discover" class="page">
-                      <h1>Discover</h1>
-                      <div class="sub">
-                          Find new music and rising artists.
+                      <div class="avatar">
+                          🎧
                       </div>
 
-                      <div class="card music">
-                          <div class="cover">🎵</div>
-                          <div class="music-info">
-                              <b>Rising Sound</b>
-                              <div class="artist">
-                                  Underground Artist
-                              </div>
-                          </div>
-                          <button class="play" onclick="play(this)">
-                              ▶
-                          </button>
-                      </div>
+                      <div>
+                          <b>BEEPZ Music</b>
 
-                      <div class="card music">
-                          <div class="cover">🎧</div>
-                          <div class="music-info">
-                              <b>New Wave</b>
-                              <div class="artist">
-                                  BEEPZ Discovery
-                              </div>
-                          </div>
-                          <button class="play" onclick="play(this)">
-                              ▶
-                          </button>
-                      </div>
-                  </section>
-
-                  <section id="live" class="page">
-                      <h1>Live</h1>
-                      <div class="sub">
-                          Discover artists going live.
-                      </div>
-
-                      <div class="card">
-                          <div class="media">🔴</div>
-                          <b>Artist Live Room</b>
-                          <p style="color:#888">
-                              Live streaming will connect here.
-                          </p>
-                          <button
-                              style="background:#ff3b30;
-                              padding:13px 20px;
-                              border-radius:10px;"
-                              onclick="live()">
-                              Join Live
-                          </button>
-                      </div>
-                  </section>
-
-                  <section id="chat" class="page">
-                      <h1>Messages</h1>
-                      <div class="sub">
-                          Your conversations will appear here.
-                      </div>
-
-                      <div class="card" onclick="chat()">
-                          💬 &nbsp; BEEPZ Team
-                      </div>
-
-                      <div class="card" onclick="chat()">
-                          🎤 &nbsp; Artist
-                      </div>
-                  </section>
-
-                  <section id="profile" class="page">
-                      <h1>Your Profile</h1>
-
-                      <div class="card" style="text-align:center">
-                          <div class="avatar"
-                               style="margin:auto;width:85px;height:85px;
-                               font-size:30px;">
-                              👤
-                          </div>
-
-                          <h2>BEEPZ User</h2>
-
-                          <div class="sub">
-                              Your account profile will connect here.
+                          <div style="color:#777;font-size:12px">
+                              Just now
                           </div>
                       </div>
-                  </section>
 
-              </main>
+                  </div>
 
-              <nav class="bottom">
+                  <div class="post-text">
+                      Welcome to BEEPZ — discover people,
+                      music and voices.
+                  </div>
 
-                  <button class="nav active"
-                          onclick="navigate('home',this)">
-                      <span class="nav-icon">⌂</span>
-                      Home
+                  <div class="media">
+                      🎵
+                  </div>
+
+                  <div class="actions">
+
+                      <button onclick="like(this)">
+                          ♡ Like
+                      </button>
+
+                      <button>
+                          💬 Comment
+                      </button>
+
+                      <button
+                          class="voice"
+                          onclick="voice()">
+                          🎙️ Voice
+                      </button>
+
+                      <button>
+                          ↗ Share
+                      </button>
+
+                  </div>
+
+              </article>
+
+          </section>
+
+          <section id="discover" class="page">
+
+              <h1>Discover</h1>
+
+              <div class="sub">
+                  Find new music and rising artists.
+              </div>
+
+              <div class="card music">
+
+                  <div class="cover">
+                      🎵
+                  </div>
+
+                  <div class="music-info">
+                      <b>Rising Sound</b>
+
+                      <div class="artist">
+                          Underground Artist
+                      </div>
+                  </div>
+
+                  <button
+                      class="play"
+                      onclick="play(this)">
+                      ▶
                   </button>
 
-                  <button class="nav"
-                          onclick="navigate('discover',this)">
-                      <span class="nav-icon">🔎</span>
-                      Discover
+              </div>
+
+              <div class="card music">
+
+                  <div class="cover">
+                      🎧
+                  </div>
+
+                  <div class="music-info">
+                      <b>New Wave</b>
+
+                      <div class="artist">
+                          BEEPZ Discovery
+                      </div>
+                  </div>
+
+                  <button
+                      class="play"
+                      onclick="play(this)">
+                      ▶
                   </button>
 
-                  <button class="nav"
-                          onclick="navigate('live',this)">
-                      <span class="nav-icon">🔴</span>
-                      Live
+              </div>
+
+          </section>
+
+          <section id="live" class="page">
+
+              <h1>Live</h1>
+
+              <div class="sub">
+                  Discover artists going live.
+              </div>
+
+              <div class="card">
+
+                  <div class="media">
+                      🔴
+                  </div>
+
+                  <b>Artist Live Room</b>
+
+                  <p style="color:#888">
+                      Live streaming will connect here.
+                  </p>
+
+                  <button
+                      style="
+                      background:#ff3b30;
+                      padding:13px 20px;
+                      border-radius:10px;
+                      color:white;"
+                      onclick="live()">
+                      Join Live
                   </button>
 
-                  <button class="nav"
-                          onclick="navigate('chat',this)">
-                      <span class="nav-icon">💬</span>
-                      Chat
-                  </button>
+              </div>
 
-                  <button class="nav"
-                          onclick="navigate('profile',this)">
-                      <span class="nav-icon">👤</span>
-                      Profile
-                  </button>
+          </section>
 
-              </nav>
+          <section id="chat" class="page">
+
+              <h1>Messages</h1>
+
+              <div class="sub">
+                  Your conversations will appear here.
+              </div>
+
+              <div
+                  class="card"
+                  onclick="chat()">
+                  💬 &nbsp; BEEPZ Team
+              </div>
+
+              <div
+                  class="card"
+                  onclick="chat()">
+                  🎤 &nbsp; Artist
+              </div>
+
+          </section>
+
+          <section id="profile" class="page">
+
+              <h1>Your Profile</h1>
+
+              <div
+                  class="card"
+                  style="text-align:center">
+
+                  <div
+                      class="avatar"
+                      style="
+                      margin:auto;
+                      width:85px;
+                      height:85px;
+                      font-size:30px;">
+
+                      👤
+
+                  </div>
+
+                  <h2>
+                      BEEPZ User
+                  </h2>
+
+                  <div class="sub">
+                      Your account profile will connect here.
+                  </div>
+
+              </div>
+
+          </section>
+
+          </main>
+
+          <nav class="bottom">
+
+              <button
+                  class="nav active"
+                  onclick="navigate('home',this)">
+
+                  <span class="nav-icon">
+                      ⌂
+                  </span>
+
+                  Home
+
+              </button>
+
+              <button
+                  class="nav"
+                  onclick="navigate('discover',this)">
+
+                  <span class="nav-icon">
+                      🔎
+                  </span>
+
+                  Discover
+
+              </button>
+
+              <button
+                  class="nav"
+                  onclick="navigate('live',this)">
+
+                  <span class="nav-icon">
+                      🔴
+                  </span>
+
+                  Live
+
+              </button>
+
+              <button
+                  class="nav"
+                  onclick="navigate('chat',this)">
+
+                  <span class="nav-icon">
+                      💬
+                  </span>
+
+                  Chat
+
+              </button>
+
+              <button
+                  class="nav"
+                  onclick="navigate('profile',this)">
+
+                  <span class="nav-icon">
+                      👤
+                  </span>
+
+                  Profile
+
+              </button>
+
+          </nav>
 
           </div>
 
           <script>
 
-              function navigate(page, button) {
-                  document.querySelectorAll('.page')
-                      .forEach(p => p.classList.remove('active'));
+          function navigate(page, button) {
 
-                  document.getElementById(page)
-                      .classList.add('active');
-
-                  document.querySelectorAll('.nav')
-                      .forEach(n => n.classList.remove('active'));
-
-                  button.classList.add('active');
-
-                  window.scrollTo(0, 0);
-              }
-
-              function like(button) {
-                  if (button.innerHTML.includes('♡')) {
-                      button.innerHTML = '♥ Liked';
-                  } else {
-                      button.innerHTML = '♡ Like';
-                  }
-              }
-
-              function voice() {
-                  alert(
-                      '30-second voice comments will be connected ' +
-                      'to the BEEPZ voice system next.'
+              document
+                  .querySelectorAll('.page')
+                  .forEach(
+                      p => p.classList.remove('active')
                   );
-              }
 
-              function play(button) {
-                  button.innerHTML =
-                      button.innerHTML === '▶' ? '❚❚' : '▶';
-              }
+              document
+                  .getElementById(page)
+                  .classList.add('active');
 
-              function live() {
-                  alert(
-                      'The BEEPZ live-streaming backend will be ' +
-                      'connected here.'
+              document
+                  .querySelectorAll('.nav')
+                  .forEach(
+                      n => n.classList.remove('active')
                   );
+
+              button.classList.add('active');
+
+              window.scrollTo(0, 0);
+          }
+
+          function like(button) {
+
+              if (button.innerHTML.includes('♡')) {
+                  button.innerHTML = '♥ Liked';
+              } else {
+                  button.innerHTML = '♡ Like';
               }
 
-              function chat() {
-                  alert(
-                      'Real-time BEEPZ chat will be connected here.'
-                  );
-              }
+          }
 
-              function notify() {
-                  alert('BEEPZ notifications will connect here.');
-              }
+          function voice() {
+
+              alert(
+                  '30-second voice comments will be added next.'
+              );
+
+          }
+
+          function play(button) {
+
+              button.innerHTML =
+                  button.innerHTML === '▶'
+                  ? '❚❚'
+                  : '▶';
+
+          }
+
+          function live() {
+
+              alert(
+                  'Live streaming will be connected next.'
+              );
+
+          }
+
+          function chat() {
+
+              alert(
+                  'Real-time chat will be connected next.'
+              );
+
+          }
+
+          function notify() {
+
+              alert(
+                  'BEEPZ notifications will connect next.'
+              );
+
+          }
 
           </script>
 
           </body>
+
           </html>
-    
+          EOF
+
+      - name: Generate Gradle wrapper
+        run: |
+          gradle wrapper --gradle-version 8.10.2
+          chmod +x gradlew
+
+      - name: Verify project
+        run: |
+          echo "Checking BEEPZ project..."
+          test -f settings.gradle
+          test -f build.gradle
+          test -f app/build.gradle
+          test -f app/src/main/AndroidManifest.xml
+          test -f app/src/main/java/com/beepz/app/MainActivity.java
+          test -f app/src/main/assets/beepz.html
+          test -f gradlew
+          echo "Project files verified."
+
+      - name: Build Debug APK
+        run: |
+          ./gradlew --no-daemon clean assembleDebug
+
+      - name: Find APK
+        run: |
+          echo "Searching for APK..."
+          find . -type f -name "*.apk" -print
+
+      - name: Verify APK exists
+        run: |
+          test -f app/build/outputs/apk/debug/app-debug.apk
+          echo "APK FOUND:"
+          ls -lh app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload BEEPZ APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BEEPZ-debug-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          
