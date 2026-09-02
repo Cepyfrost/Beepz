@@ -1,7 +1,6 @@
-
 name: Build BEEPZ APK
 
-on:
+"on":
   workflow_dispatch:
   push:
     branches:
@@ -22,12 +21,12 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK
         run: |
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
@@ -36,12 +35,7 @@ jobs:
         run: |
           mkdir -p app/src/main/java/com/beepz/app
           mkdir -p app/src/main/assets
-          mkdir -p app/src/main/res/drawable
-          mkdir -p app/src/main/res/mipmap-hdpi
-          mkdir -p app/src/main/res/mipmap-mdpi
-          mkdir -p app/src/main/res/mipmap-xhdpi
-          mkdir -p app/src/main/res/mipmap-xxhdpi
-          mkdir -p app/src/main/res/mipmap-xxxhdpi
+          mkdir -p app/src/main/res/values
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -113,13 +107,12 @@ jobs:
               <application
                   android:allowBackup="true"
                   android:label="BEEPZ"
-                  android:theme="@style/AppTheme"
-                  android:usesCleartextTraffic="true">
+                  android:theme="@style/AppTheme">
 
                   <activity
                       android:name=".MainActivity"
-                      android:screenOrientation="portrait"
-                      android:exported="true">
+                      android:exported="true"
+                      android:screenOrientation="portrait">
 
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
@@ -133,18 +126,13 @@ jobs:
           </manifest>
           EOF
 
-          mkdir -p app/src/main/res/values
-
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <resources>
-
               <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
                   <item name="android:fontFamily">sans</item>
-                  <item name="android:windowLightStatusBar">false</item>
                   <item name="android:statusBarColor">#080808</item>
                   <item name="android:navigationBarColor">#080808</item>
               </style>
-
           </resources>
           EOF
 
@@ -171,11 +159,8 @@ jobs:
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setMediaPlaybackRequiresUserGesture(false);
-                  settings.setAllowFileAccess(true);
-                  settings.setAllowContentAccess(true);
 
                   webView.setWebViewClient(new WebViewClient());
-
                   webView.loadUrl("file:///android_asset/beepz.html");
 
                   setContentView(webView);
@@ -198,7 +183,8 @@ jobs:
           <head>
               <meta charset="UTF-8">
               <meta name="viewport"
-                    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    content="width=device-width, initial-scale=1.0,
+                    maximum-scale=1.0, user-scalable=no">
 
               <title>BEEPZ</title>
 
@@ -213,7 +199,6 @@ jobs:
                       background: #080808;
                       color: white;
                       font-family: Arial, sans-serif;
-                      overflow-x: hidden;
                   }
 
                   .app {
@@ -221,7 +206,7 @@ jobs:
                       padding-bottom: 75px;
                   }
 
-                  .top {
+                  header {
                       height: 70px;
                       display: flex;
                       align-items: center;
@@ -244,13 +229,6 @@ jobs:
                       color: #ff3b30;
                   }
 
-                  .icon {
-                      font-size: 25px;
-                      background: none;
-                      border: none;
-                      color: white;
-                  }
-
                   .content {
                       padding: 18px;
                   }
@@ -263,85 +241,49 @@ jobs:
                       display: block;
                   }
 
-                  .welcome {
+                  h1 {
                       font-size: 25px;
-                      font-weight: bold;
-                      margin-bottom: 6px;
+                      margin-bottom: 5px;
                   }
 
                   .sub {
-                      color: #999;
-                      margin-bottom: 22px;
-                  }
-
-                  .story-row {
-                      display: flex;
-                      gap: 14px;
-                      overflow-x: auto;
-                      padding-bottom: 18px;
-                  }
-
-                  .story {
-                      min-width: 65px;
-                      text-align: center;
-                      font-size: 11px;
-                  }
-
-                  .story-avatar {
-                      width: 58px;
-                      height: 58px;
-                      border-radius: 50%;
-                      border: 2px solid #ff3b30;
-                      background: #1b1b1b;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      margin: auto auto 5px;
-                      font-size: 20px;
+                      color: #888;
+                      margin-bottom: 20px;
                   }
 
                   .post {
                       background: #121212;
-                      border: 1px solid #222;
+                      border: 1px solid #242424;
                       border-radius: 15px;
                       padding: 15px;
                       margin-bottom: 18px;
                   }
 
-                  .post-head {
+                  .user {
                       display: flex;
                       align-items: center;
                       gap: 10px;
                   }
 
                   .avatar {
-                      width: 42px;
-                      height: 42px;
+                      width: 44px;
+                      height: 44px;
                       border-radius: 50%;
-                      background: #242424;
+                      background: #292929;
                       display: flex;
                       align-items: center;
                       justify-content: center;
                   }
 
-                  .username {
-                      font-weight: bold;
-                  }
-
-                  .time {
-                      color: #777;
-                      font-size: 12px;
-                  }
-
                   .post-text {
                       line-height: 1.5;
-                      margin: 14px 0;
+                      margin: 15px 0;
                   }
 
-                  .post-media {
-                      height: 190px;
+                  .media {
+                      height: 180px;
                       border-radius: 12px;
-                      background: linear-gradient(135deg, #1b1b1b, #292929);
+                      background: #202020;
                       display: flex;
                       align-items: center;
                       justify-content: center;
@@ -351,16 +293,13 @@ jobs:
 
                   .actions {
                       display: flex;
-                      gap: 20px;
-                      color: #bbb;
+                      gap: 18px;
                   }
 
-                  .action {
+                  button {
+                      border: 0;
                       background: none;
-                      border: none;
-                      color: #bbb;
-                      font-size: 14px;
-                      padding: 5px 0;
+                      color: white;
                   }
 
                   .voice {
@@ -368,54 +307,18 @@ jobs:
                       font-weight: bold;
                   }
 
-                  .bottom {
-                      position: fixed;
-                      bottom: 0;
-                      left: 0;
-                      right: 0;
-                      height: 68px;
-                      background: #101010;
-                      border-top: 1px solid #252525;
-                      display: flex;
-                      justify-content: space-around;
-                      align-items: center;
-                      z-index: 20;
-                  }
-
-                  .nav {
-                      background: none;
-                      border: none;
-                      color: #777;
-                      font-size: 11px;
-                      display: flex;
-                      flex-direction: column;
-                      align-items: center;
-                      gap: 4px;
-                  }
-
-                  .nav.active {
-                      color: white;
-                  }
-
-                  .nav-icon {
-                      font-size: 22px;
-                  }
-
-                  .section-title {
-                      font-size: 24px;
-                      font-weight: bold;
-                      margin-bottom: 18px;
-                  }
-
-                  .music {
-                      background: #151515;
-                      border: 1px solid #252525;
+                  .card {
+                      background: #121212;
+                      border: 1px solid #242424;
                       border-radius: 15px;
                       padding: 16px;
                       margin-bottom: 12px;
+                  }
+
+                  .music {
                       display: flex;
                       align-items: center;
-                      gap: 14px;
+                      gap: 13px;
                   }
 
                   .cover {
@@ -426,74 +329,54 @@ jobs:
                       display: flex;
                       align-items: center;
                       justify-content: center;
-                      font-size: 23px;
+                      font-size: 22px;
                   }
 
                   .music-info {
                       flex: 1;
                   }
 
-                  .music-title {
-                      font-weight: bold;
-                  }
-
-                  .music-artist {
+                  .artist {
                       color: #888;
                       font-size: 13px;
-                      margin-top: 5px;
+                      margin-top: 4px;
                   }
 
                   .play {
-                      width: 40px;
-                      height: 40px;
+                      width: 42px;
+                      height: 42px;
                       border-radius: 50%;
-                      border: none;
                       background: white;
                       color: black;
                   }
 
-                  .profile-card {
-                      text-align: center;
-                      background: #121212;
-                      border: 1px solid #222;
-                      border-radius: 18px;
-                      padding: 25px;
-                  }
-
-                  .big-avatar {
-                      width: 90px;
-                      height: 90px;
-                      border-radius: 50%;
-                      margin: auto;
-                      background: #252525;
+                  .bottom {
+                      position: fixed;
+                      left: 0;
+                      right: 0;
+                      bottom: 0;
+                      height: 68px;
+                      background: #101010;
+                      border-top: 1px solid #252525;
                       display: flex;
+                      justify-content: space-around;
                       align-items: center;
-                      justify-content: center;
-                      font-size: 35px;
+                      z-index: 20;
                   }
 
-                  .profile-name {
-                      font-size: 22px;
-                      font-weight: bold;
-                      margin-top: 12px;
-                  }
-
-                  .button {
-                      width: 100%;
-                      padding: 14px;
-                      border-radius: 12px;
-                      border: none;
-                      background: #ff3b30;
-                      color: white;
-                      font-size: 15px;
-                      font-weight: bold;
-                      margin-top: 12px;
-                  }
-
-                  .empty {
-                      text-align: center;
+                  .nav {
                       color: #777;
-                      padding: 60px 20px;
+                      font-size: 11px;
+                  }
+
+                  .nav.active {
+                      color: white;
+                  }
+
+                  .nav-icon {
+                      display: block;
+                      font-size: 21px;
+                      margin-bottom: 3px;
                   }
               </style>
           </head>
@@ -502,116 +385,253 @@ jobs:
 
           <div class="app">
 
-              <header class="top">
+              <header>
                   <div class="logo">BEEP<span>Z</span></div>
-                  <button class="icon" onclick="showMessage()">🔔</button>
+                  <button onclick="notify()">🔔</button>
               </header>
 
               <main class="content">
 
                   <section id="home" class="page active">
-
-                      <div class="welcome">What's happening?</div>
+                      <h1>What's happening?</h1>
                       <div class="sub">Say it. Don't just type it.</div>
 
-                      <div class="story-row">
-                          <div class="story">
-                              <div class="story-avatar">+</div>
-                              Your story
-                          </div>
-                          <div class="story">
-                              <div class="story-avatar">🎵</div>
-                              Music
-                          </div>
-                          <div class="story">
-                              <div class="story-avatar">🎙️</div>
-                              Live
-                          </div>
-                          <div class="story">
-                              <div class="story-avatar">🔥</div>
-                              Trending
-                          </div>
-                      </div>
-
                       <article class="post">
-                          <div class="post-head">
+                          <div class="user">
                               <div class="avatar">🎧</div>
                               <div>
-                                  <div class="username">BEEPZ Music</div>
-                                  <div class="time">Just now</div>
+                                  <b>BEEPZ Music</b>
+                                  <div style="color:#777;font-size:12px">
+                                      Just now
+                                  </div>
                               </div>
                           </div>
 
                           <div class="post-text">
-                              Welcome to BEEPZ. Discover people, music and voices.
+                              Welcome to BEEPZ — discover people,
+                              music and voices.
                           </div>
 
-                          <div class="post-media">🎵</div>
+                          <div class="media">🎵</div>
 
                           <div class="actions">
-                              <button class="action" onclick="like(this)">♡ Like</button>
-                              <button class="action">💬 Comment</button>
-                              <button class="action voice" onclick="voiceComment()">🎙️ Voice</button>
-                              <button class="action">↗ Share</button>
+                              <button onclick="like(this)">♡ Like</button>
+                              <button>💬 Comment</button>
+                              <button class="voice" onclick="voice()">
+                                  🎙️ Voice
+                              </button>
+                              <button>↗ Share</button>
                           </div>
                       </article>
 
                       <article class="post">
-                          <div class="post-head">
+                          <div class="user">
                               <div class="avatar">🎤</div>
                               <div>
-                                  <div class="username">Rising Artist</div>
-                                  <div class="time">12 min ago</div>
+                                  <b>Rising Artist</b>
+                                  <div style="color:#777;font-size:12px">
+                                      12 min ago
+                                  </div>
                               </div>
                           </div>
 
                           <div class="post-text">
-                              New music coming soon. BEEPZ fam, are you ready?
+                              New music coming soon. BEEPZ fam,
+                              are you ready?
                           </div>
 
                           <div class="actions">
-                              <button class="action" onclick="like(this)">♡ Like</button>
-                              <button class="action">💬 Comment</button>
-                              <button class="action voice" onclick="voiceComment()">🎙️ Voice</button>
-                              <button class="action">↗ Share</button>
+                              <button onclick="like(this)">♡ Like</button>
+                              <button>💬 Comment</button>
+                              <button class="voice" onclick="voice()">
+                                  🎙️ Voice
+                              </button>
                           </div>
                       </article>
-
                   </section>
 
                   <section id="discover" class="page">
-                      <div class="section-title">Discover</div>
+                      <h1>Discover</h1>
+                      <div class="sub">
+                          Find new music and rising artists.
+                      </div>
 
-                      <div class="music">
+                      <div class="card music">
                           <div class="cover">🎵</div>
                           <div class="music-info">
-                              <div class="music-title">Rising Sound</div>
-                              <div class="music-artist">Underground Artist</div>
+                              <b>Rising Sound</b>
+                              <div class="artist">
+                                  Underground Artist
+                              </div>
                           </div>
-                          <button class="play" onclick="playMusic(this)">▶</button>
+                          <button class="play" onclick="play(this)">
+                              ▶
+                          </button>
                       </div>
 
-                      <div class="music">
+                      <div class="card music">
                           <div class="cover">🎧</div>
                           <div class="music-info">
-                              <div class="music-title">New Wave</div>
-                              <div class="music-artist">BEEPZ Discovery</div>
+                              <b>New Wave</b>
+                              <div class="artist">
+                                  BEEPZ Discovery
+                              </div>
                           </div>
-                          <button class="play" onclick="playMusic(this)">▶</button>
-                      </div>
-
-                      <div class="music">
-                          <div class="cover">🔥</div>
-                          <div class="music-info">
-                              <div class="music-title">Trending Now</div>
-                              <div class="music-artist">BEEPZ Charts</div>
-                          </div>
-                          <button class="play" onclick="playMusic(this)">▶</button>
+                          <button class="play" onclick="play(this)">
+                              ▶
+                          </button>
                       </div>
                   </section>
 
                   <section id="live" class="page">
-                      <div class="section-title">Live</div>
+                      <h1>Live</h1>
+                      <div class="sub">
+                          Discover artists going live.
+                      </div>
 
-                      <div class="post">
-                          <div class="post-he
+                      <div class="card">
+                          <div class="media">🔴</div>
+                          <b>Artist Live Room</b>
+                          <p style="color:#888">
+                              Live streaming will connect here.
+                          </p>
+                          <button
+                              style="background:#ff3b30;
+                              padding:13px 20px;
+                              border-radius:10px;"
+                              onclick="live()">
+                              Join Live
+                          </button>
+                      </div>
+                  </section>
+
+                  <section id="chat" class="page">
+                      <h1>Messages</h1>
+                      <div class="sub">
+                          Your conversations will appear here.
+                      </div>
+
+                      <div class="card" onclick="chat()">
+                          💬 &nbsp; BEEPZ Team
+                      </div>
+
+                      <div class="card" onclick="chat()">
+                          🎤 &nbsp; Artist
+                      </div>
+                  </section>
+
+                  <section id="profile" class="page">
+                      <h1>Your Profile</h1>
+
+                      <div class="card" style="text-align:center">
+                          <div class="avatar"
+                               style="margin:auto;width:85px;height:85px;
+                               font-size:30px;">
+                              👤
+                          </div>
+
+                          <h2>BEEPZ User</h2>
+
+                          <div class="sub">
+                              Your account profile will connect here.
+                          </div>
+                      </div>
+                  </section>
+
+              </main>
+
+              <nav class="bottom">
+
+                  <button class="nav active"
+                          onclick="navigate('home',this)">
+                      <span class="nav-icon">⌂</span>
+                      Home
+                  </button>
+
+                  <button class="nav"
+                          onclick="navigate('discover',this)">
+                      <span class="nav-icon">🔎</span>
+                      Discover
+                  </button>
+
+                  <button class="nav"
+                          onclick="navigate('live',this)">
+                      <span class="nav-icon">🔴</span>
+                      Live
+                  </button>
+
+                  <button class="nav"
+                          onclick="navigate('chat',this)">
+                      <span class="nav-icon">💬</span>
+                      Chat
+                  </button>
+
+                  <button class="nav"
+                          onclick="navigate('profile',this)">
+                      <span class="nav-icon">👤</span>
+                      Profile
+                  </button>
+
+              </nav>
+
+          </div>
+
+          <script>
+
+              function navigate(page, button) {
+                  document.querySelectorAll('.page')
+                      .forEach(p => p.classList.remove('active'));
+
+                  document.getElementById(page)
+                      .classList.add('active');
+
+                  document.querySelectorAll('.nav')
+                      .forEach(n => n.classList.remove('active'));
+
+                  button.classList.add('active');
+
+                  window.scrollTo(0, 0);
+              }
+
+              function like(button) {
+                  if (button.innerHTML.includes('♡')) {
+                      button.innerHTML = '♥ Liked';
+                  } else {
+                      button.innerHTML = '♡ Like';
+                  }
+              }
+
+              function voice() {
+                  alert(
+                      '30-second voice comments will be connected ' +
+                      'to the BEEPZ voice system next.'
+                  );
+              }
+
+              function play(button) {
+                  button.innerHTML =
+                      button.innerHTML === '▶' ? '❚❚' : '▶';
+              }
+
+              function live() {
+                  alert(
+                      'The BEEPZ live-streaming backend will be ' +
+                      'connected here.'
+                  );
+              }
+
+              function chat() {
+                  alert(
+                      'Real-time BEEPZ chat will be connected here.'
+                  );
+              }
+
+              function notify() {
+                  alert('BEEPZ notifications will connect here.');
+              }
+
+          </script>
+
+          </body>
+          </html>
+    
